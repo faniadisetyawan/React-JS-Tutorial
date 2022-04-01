@@ -74,21 +74,23 @@ function AppProvider({ children }) {
 
   const fetchConfig = async () => {
     setLoadingConfig(true);
-    await setTimeout(() => {
+    await new Promise(resolve => setTimeout(() => {
       setConfig({
         appName: 'ReactApp'
       });
       setLoadingConfig(false);
-    }, 1000);
+      resolve();
+    }), 1000);
   }
   
   const fetchUser = async () => {
     setLoadingUser(true);
-    await setTimeout(() => {
+    await new Promise(resolve => setTimeout(() => {
       const findUser = JSON.parse(localStorage.getItem(APP_KEY));
       setUser(findUser);
       setLoadingUser(false);
-    }, 2000);
+      resolve();
+    }), 1000);
   }
 
   React.useEffect(() => {
@@ -117,7 +119,11 @@ function AppProvider({ children }) {
     fetchUser
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  )
 }
 
 function AuthButton() {
