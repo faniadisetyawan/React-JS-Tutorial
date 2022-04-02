@@ -6,31 +6,51 @@ import {
   Redirect,
   useHistory
 } from 'react-router-dom';
+import classNames from 'classnames';
+import { APP_KEY } from './services';
 import Login from './components/auth/Login';
 import Dashboard from './components/dashboard/Index';
-import { APP_KEY } from './services';
+import AppSidebar from './components/shared/layouts/AppSidebar';
+const FormsComponent = React.lazy(() => import('./components/forms/Index'));
 
 function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <main>
+        <Layout>
           <AuthButton />
 
           <Switch>
             <Route path="/login">
               <Login />
             </Route>
+
             <PrivateRoute path="/dashboard">
               <Dashboard />
             </PrivateRoute>
 
+            <PrivateRoute path="/forms">
+              <React.Suspense fallback="...">
+                <FormsComponent />
+              </React.Suspense>
+            </PrivateRoute>
+
             <Redirect to="/dashboard" />
           </Switch>
-        </main>
+        </Layout>
       </BrowserRouter>
     </AppProvider>
   );
+}
+
+function Layout({ children }) {
+  const { hideSidebar } = useApp();
+
+  return (
+    <main className={classNames({'hide-sidebar': hideSidebar})}>
+      {children}
+    </main>
+  )
 }
 
 const fakeAuth = {
@@ -54,8 +74,11 @@ export function useApp() {
 function AppProvider({ children }) {
   const [loadingConfig, setLoadingConfig] = React.useState(true);
   const [loadingUser, setLoadingUser] = React.useState(false);
+  const [hideSidebar, setHideSidebar] = React.useState(false);
   const [config, setConfig] = React.useState(null);
   const [user, setUser] = React.useState(null);
+
+  const toggleSidebar = () => setHideSidebar(!hideSidebar);
 
   const signin = (newUser, callback) => {
     return fakeAuth.signin(() => {
@@ -111,8 +134,10 @@ function AppProvider({ children }) {
   }
 
   const value = {
+    hideSidebar,
     config,
     user,
+    toggleSidebar,
     signin,
     signout,
     fetchConfig,
@@ -128,25 +153,10 @@ function AppProvider({ children }) {
 
 function AuthButton() {
   const history = useHistory();
-  const { config, user, signout } = useApp();
+  const { user, signout } = useApp();
 
   return !!user ? (
-    <React.Fragment>
-      <h1>{config.appName}</h1>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
-        <p>Welcome {user.username}!</p>
-
-        <button onClick={() => signout(() => history.push("/"))}>
-          Sign out
-        </button>
-      </div>
-
-    </React.Fragment>
+    <AppSidebar signout={() => signout(() => history.push("/"))} />
   ) : false
 }
 
